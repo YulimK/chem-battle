@@ -871,3 +871,20 @@ body:has(.phone.night-bg){
 .top{grid-template-columns:1fr auto auto 1fr}
 .top>:nth-child(4){justify-self:end}
 .top>:nth-child(3){justify-self:end;margin-right:2px}
+
+/* ============================================================
+   Collapsible quiz cards on the professor dashboard
+   ============================================================ */
+.quizcard{padding:8px 10px}
+.quizhead{
+  display:flex;align-items:center;gap:8px;width:100%;
+  border:0;background:transparent;color:var(--ink);
+  padding:6px 2px;text-align:left;font-weight:700;
+}
+.quizhead .qname{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.quizhead .caret{color:var(--gold);flex:none}
+.quizhead:hover .qname{color:var(--gold)}
+.quizcard.open{box-shadow:inset 0 0 0 1px var(--gold-deep)}
+.quizcard .input{margin:5px 0}

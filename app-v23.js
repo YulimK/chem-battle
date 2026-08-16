@@ -4,7 +4,7 @@
    Credits are shown in-app under 내 정보 → CREDITS.
    ============================================================ */
 
-const APP_BUILD = 'v23-ios-sprite';
+const APP_BUILD = 'v24-quiz-list';
 console.log('%cChem Battle app.js ' + APP_BUILD, 'background:#e0b74e;color:#241a02;padding:2px 8px;font-weight:700');
 
 const app = document.getElementById('app');
@@ -1064,8 +1064,18 @@ function ending() {
 
 const nextId = () => db.liveQueue.reduce((m, q) => Math.max(m, q.id), 0) + 1;
 
+// Only one quiz card is expanded at a time; the list stays scannable
+// once a semester's worth of questions has accumulated.
+let openQuiz = null;
+window.toggleQuiz = id => { openQuiz = (openQuiz === id ? null : id); render(); };
+
 window.addLive = () => {
-  db.liveQueue.push({ id: nextId(), title: `Live Quiz ${db.liveQueue.length + 1}`, question: '', options: ['', '', ''], correct: 0, participationReward: 10, correctReward: 10, status: 'ready', responses: {} });
+  const id = nextId();
+  const n = db.liveQueue.length + 1;
+  db.liveQueue.push({ id, ord: id, title: `Quiz ${n}`, question: '', options: ['', '', ''],
+                      correct: 0, participationReward: 10, correctReward: 10,
+                      status: 'ready', responses: {} });
+  openQuiz = id;
   save(); render();
 };
 
@@ -1182,15 +1192,27 @@ function admin() {
       ${active ? `<p class="small">현재 퀴즈 응답 <b>${Object.keys(active.responses || {}).length}명</b></p>` : ''}
     </div>
     <div class="panel">
-      <div class="row"><h3>Today's Live Quiz Queue</h3><button class="btn inline yellow" onclick="addLive()">+ ADD</button></div>
-      ${db.liveQueue.map(q => `<div class="panel soft">
-        <b>${esc(q.title)}</b> <span class="badge ${q.status === 'active' ? 'live' : ''}">${q.status.toUpperCase()}</span>
-        <input id="lt${q.id}" class="input" value="${esc(q.title)}">
+      <div class="row"><h3>Live Quiz (${db.liveQueue.length}개)</h3><button class="btn inline yellow" onclick="addLive()">+ ADD</button></div>
+      <p class="small">제목을 누르면 펼쳐집니다. 진행 중이거나 오늘 편집한 문제만 열려 있어요.</p>
+      ${db.liveQueue.map(q => {
+        const open = openQuiz === q.id || q.status === 'active';
+        const n = Object.keys(q.responses || {}).length;
+        return `<div class="panel soft quizcard ${open ? 'open' : ''}">
+        <button class="quizhead" onclick="toggleQuiz(${q.id})">
+          <span class="qname">${esc(q.title || '(제목 없음)')}</span>
+          <span class="badge ${q.status === 'active' ? 'live' : ''}">${q.status.toUpperCase()}</span>
+          ${n ? `<span class="small">${n}명</span>` : ''}
+          <span class="caret">${open ? '▾' : '▸'}</span>
+        </button>
+        ${open ? `
+        <input id="lt${q.id}" class="input" value="${esc(q.title)}" placeholder="제목 (예: 3주차 1번)">
         <textarea id="lq${q.id}" class="input" placeholder="문제">${esc(q.question)}</textarea>
         ${q.options.map((o, i) => `<input id="lo${q.id}_${i}" class="input" value="${esc(o)}" placeholder="선택지 ${i + 1}">`).join('')}
         <select id="lc${q.id}" class="input">${[0, 1, 2].map(i => `<option value="${i}" ${q.correct === i ? 'selected' : ''}>정답 ${i + 1}</option>`).join('')}</select>
         <div class="row"><button class="btn ghost" onclick="saveLive(${q.id})">SAVE</button><button class="btn green" onclick="startLive(${q.id})">START</button><button class="btn red" onclick="endLive(${q.id})">END</button></div>
-      </div>`).join('')}
+        ${q.status === 'ended' ? '<p class="small">종료된 문제입니다. 다시 START 하면 응답과 지급 기록이 지워집니다.</p>' : ''}` : ''}
+      </div>`;
+      }).join('')}
       ${active?.status === 'ended' ? `<button class="btn green" onclick="startNext()">START NEXT QUIZ ▶</button>` : ''}
     </div>
     <div class="panel">
