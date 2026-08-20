@@ -4,7 +4,7 @@
    Credits are shown in-app under 내 정보 → CREDITS.
    ============================================================ */
 
-const APP_BUILD = 'v42-keep-loaded';
+const APP_BUILD = 'v43-chat-avatars';
 console.log('%cChem Battle app.js ' + APP_BUILD, 'background:#e0b74e;color:#241a02;padding:2px 8px;font-weight:700');
 
 const app = document.getElementById('app');
@@ -197,6 +197,25 @@ async function fetchQuizzes() {
   return data;
 }
 
+/* Chat shows each speaker's avatar, but the browser only knows its own
+   account. This fills in the others' looks. The users table exposes just
+   nick / profile / potions / xp to students, so no private data is fetched. */
+async function ensureProfiles(names) {
+  if (!SB) return;
+  const missing = [...new Set(names)].filter(n => n && !db.users[n]);
+  if (!missing.length) return;
+  const { data } = await SB.from('users').select('nick,profile').in('nick', missing);
+  (data || []).forEach(r => {
+    const p = r.profile || {};
+    db.users[r.nick] = {
+      nick: r.nick,
+      body: p.body || { ...DEFAULT_BODY },
+      equipped: p.equipped || {},
+      inventory: p.inventory || []
+    };
+  });
+}
+
 async function pullShared() {
   const [q, w, m, r] = await Promise.all([
     fetchQuizzes(),
@@ -206,7 +225,11 @@ async function pullShared() {
   ]);
   if (q) adoptQuizzes(q);
   if (w.data) adoptWeekly(w.data);
-  if (m.data) db.messages = m.data.map(x => ({ name: x.name, admin: x.admin, text: x.text, ts: Number(x.ts) }));
+  if (m.data) {
+    db.messages = m.data.map(x => ({ id: x.id, name: x.name, admin: x.admin,
+                                     text: x.text, ts: Number(x.ts) }));
+    await ensureProfiles(db.messages.filter(x => !x.admin).map(x => x.name));
+  }
   db.semesterComplete = !!(r.data?.data?.semesterComplete);
   db.currentWeek = Number(r.data?.data?.currentWeek) || 1;
 }
@@ -295,6 +318,9 @@ async function connect() {
           const m = p.new;
           if (!db.messages.some(x => x.ts === Number(m.ts) && x.name === m.name)) {
             db.messages.push({ id: m.id, name: m.name, admin: m.admin, text: m.text, ts: Number(m.ts) });
+            if (!m.admin && !db.users[m.name]) {
+              ensureProfiles([m.name]).then(() => { if (page === 'chat') render(); });
+            }
             if (page === 'chat') render();
           }
         })
@@ -982,7 +1008,8 @@ window.sendMsg = async () => {
 function chat() {
   shell(`<div class="page chatpage">
     ${db.messages.map(m => {
-      const u = m.admin ? profLook() : db.users[m.name];
+      const u = m.admin ? profLook()
+              : (db.users[m.name] || { body: { ...DEFAULT_BODY }, equipped: {} });
       return `<div class="chat">
         <div class="chatav">${u ? sprite(u, 1) : ''}</div>
         <div class="bubble ${m.admin ? 'notice' : ''}">
