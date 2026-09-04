@@ -4,10 +4,33 @@
    Credits are shown in-app under 내 정보 → CREDITS.
    ============================================================ */
 
-const APP_BUILD = 'v43-chat-avatars';
+const APP_BUILD = 'v44-katex';
 console.log('%cChem Battle app.js ' + APP_BUILD, 'background:#e0b74e;color:#241a02;padding:2px 8px;font-weight:700');
 
 const app = document.getElementById('app');
+
+/* Formulas.
+
+   Text is escaped before it reaches the page, then KaTeX walks the finished
+   DOM and converts only the delimited parts. Because it works on text nodes
+   rather than raw HTML, a student typing angle brackets still can't inject
+   markup. Chemistry uses the mhchem extension: \ce{H2O} -> H₂O. */
+function paint(html) {
+  app.innerHTML = html;
+  if (!window.renderMathInElement) return;      // CDN still loading
+  try {
+    window.renderMathInElement(app, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$',  right: '$',  display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true }
+      ],
+      ignoredTags: ['script', 'noscript', 'style', 'textarea', 'option'],
+      throwOnError: false
+    });
+  } catch (e) { console.warn('math render failed', e); }
+}
 const KEY = 'chemWorldV8';
 const TOTAL_WEEKS = 15;
 
@@ -509,7 +532,7 @@ const demoLook = body => ({
 
 function login() {
   const r = localStorage.getItem('cwRemember') || '';
-  app.innerHTML = `
+  paint(`
   <div class="phone">
     <div class="page center login">
       <div class="logo"><h1>CHEM<br>BATTLE</h1></div>
@@ -523,7 +546,7 @@ function login() {
       <p class="sub">처음이신가요?</p>
       <button class="linkbtn" onclick="startCreate()">캐릭터 만들기 ></button>
     </div>
-  </div>`;
+  </div>`);
   window.pinMode();   // a remembered professor nickname widens the field right away
 }
 
@@ -580,7 +603,7 @@ function createPage() {
   const b = draft.body;
   const chip = (k, v, label) =>
     `<button class="chip ${b[k] === v ? 'on' : ''}" onclick="setDraft('${k}','${v}')">${label}</button>`;
-  app.innerHTML = `<div class="phone">
+  paint(`<div class="phone">
     <div class="top"><button class="iconbtn" onclick="draft=null;login()">←</button><b>캐릭터 만들기</b><span></span></div>
     <div class="page center">
       <div class="stagebox">${stage(demoLook(b), 4)}</div>
@@ -594,7 +617,7 @@ function createPage() {
       </div>
       <button class="btn green" onclick="finishCreate()">이 캐릭터로 시작하기</button>
     </div>
-  </div>`;
+  </div>`);
 }
 
 window.doLogin = async () => {
@@ -678,7 +701,7 @@ function shell(html, opts = {}) {
              : syncErr  ? '<span class="netdot bad" title="서버 연결 문제"></span>'
              : SB       ? '<span class="netdot ok" title="수업 서버 연결됨"></span>'
                         : '<span class="netdot bad" title="연결 중"></span>';
-  app.innerHTML = `<div class="phone${opts.theme ? ' ' + opts.theme : ''}"><div class="top">${left}${title}${link}${right}</div>${html}${nav}</div>`;
+  paint(`<div class="phone${opts.theme ? ' ' + opts.theme : ''}"><div class="top">${left}${title}${link}${right}</div>${html}${nav}</div>`);
 }
 
 window.go = p => { page = p; render(); };
@@ -1548,6 +1571,8 @@ function weekedit() {
 
     <div class="panel">
       <h2>${w.week}주차</h2>
+      <p class="small">수식은 <b>$...$</b> 안에 씁니다. 화학식은
+        <b>$\\ce{H2O}</b>, 첨자는 <b>$x^2$</b>, <b>$a_1$</b> 처럼 쓰세요.</p>
       <label class="flabel">주차 제목 <span class="small">(비워두면 "${w.week}주차"로만 표시)</span></label>
       <input id="wtitle" class="input" value="${esc(w.title)}" placeholder="예) 원자의 구조">
     </div>
@@ -1595,6 +1620,7 @@ function admin() {
     <div class="panel">
       <div class="row"><h3>Live Quiz (${db.liveQueue.length}개)</h3><button class="btn inline yellow" onclick="addLive()">+ ADD</button></div>
       <p class="small">제목을 누르면 펼쳐집니다. 진행 중이거나 오늘 편집한 문제만 열려 있어요.</p>
+      <p class="small">수식은 <b>$...$</b> 안에 씁니다. 예: <b>$\\ce{H2SO4}$</b>, <b>$x^2$</b></p>
       ${db.liveQueue.map(q => {
         const open = openQuiz === q.id || q.status === 'active';
         const n = Object.keys(q.responses || {}).length;
@@ -1666,6 +1692,10 @@ function render() {
 }
 
 async function boot() {
+  // The math library is deferred, so redraw once if the first paint beat it.
+  if (!window.renderMathInElement) {
+    window.addEventListener('load', () => { if (session || draft) render(); }, { once: true });
+  }
   await loadAvatars();
   try {
     await connect();
@@ -1684,9 +1714,9 @@ async function boot() {
 }
 
 boot().catch(e => {
-  app.innerHTML = `<div class="phone"><div class="page center">
+  paint(`<div class="phone"><div class="page center">
     <h2>아바타 데이터를 불러오지 못했습니다</h2>
     <p class="small">avatar-atlas.png / avatar-manifest.json 이 index.html과 같은 폴더에 있는지 확인해 주세요.<br>
     파일을 더블클릭해서 열지 말고 <b>python3 -m http.server 8000</b> 으로 실행해야 합니다.</p>
-    <p class="small">${esc(e.message)}</p></div></div>`;
+    <p class="small">${esc(e.message)}</p></div></div>`);
 });

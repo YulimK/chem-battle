@@ -941,3 +941,14 @@ body:has(.phone.night-bg){
 }
 .flabel .small{font-weight:400;color:var(--dim)}
 .panel .row b{flex:1}
+
+/* ============================================================
+   수식 (KaTeX)
+   The pixel font has no math glyphs, so formulas use KaTeX's own face at a
+   slightly larger size to sit level with the surrounding Korean text.
+   ============================================================ */
+.katex{font-size:1.05em;color:inherit}
+.katex-display{margin:10px 0;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.quiz-option .katex,.qhead .katex,.explain .katex{color:inherit}
+/* A malformed formula shows its source instead of breaking the layout. */
+.katex-error{color:#e06a6a;font-family:inherit;font-size:.9em}
