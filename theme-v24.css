@@ -974,9 +974,17 @@ body:has(.phone.night-bg){
 .qhead::-webkit-scrollbar-thumb,.explain::-webkit-scrollbar-thumb,
 .katex::-webkit-scrollbar-thumb{background:#3a4a4c;border-radius:9px}
 
-/* Options are short, so let them wrap onto a second line instead. */
+/* Options can hold a whole reaction equation. Let the row wrap, and give a
+   long formula its own scrollable strip at a slightly smaller size so it
+   fits a phone without shrinking the Korean text around it. */
 .quiz-option{flex-wrap:wrap}
 .quiz-option>span:first-child{min-width:0;flex:1}
+.quiz-option .katex{
+  font-size:.95em;
+  display:inline-block;max-width:100%;
+  overflow-x:auto;overflow-y:hidden;
+  padding-bottom:2px;
+}
 /* A malformed formula shows its source instead of breaking the layout. */
 .katex-error{color:#e06a6a;font-family:inherit;font-size:.9em}
 
