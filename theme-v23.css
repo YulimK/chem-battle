@@ -393,7 +393,10 @@ input[type=checkbox]{accent-color:var(--green);width:16px;height:16px}
 .qtab.no{background:linear-gradient(#c85f5f,#7a2f2f);color:#fff0f0}
 .qtab.now{box-shadow:0 0 0 2px var(--gold),inset 0 1px 0 rgba(255,255,255,.15)}
 
-.qhead{display:block;margin-bottom:12px;line-height:1.7}
+.qhead{
+  display:block;margin-bottom:12px;line-height:1.7;
+  white-space:pre-line;      /* 문제 안의 줄바꿈을 살립니다 */
+}
 
 .quiz-option{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
@@ -948,8 +951,32 @@ body:has(.phone.night-bg){
    slightly larger size to sit level with the surrounding Korean text.
    ============================================================ */
 .katex{font-size:1.05em;color:inherit}
-.katex-display{margin:10px 0;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.katex-display{
+  margin:12px 0;padding:8px 10px;
+  overflow-x:auto;overflow-y:hidden;
+  background:rgba(0,0,0,.28);border-radius:8px;
+  box-shadow:inset 0 0 0 1px #2a3639;
+}
 .quiz-option .katex,.qhead .katex,.explain .katex{color:inherit}
+
+/* A KaTeX span is one unbreakable box, so a long reaction equation runs off
+   the side of a phone. Wrapping it in its own scrollable strip keeps the
+   surrounding Korean text flowing normally while the formula can be swiped. */
+.qhead .katex,.explain .katex,.quiz-option .katex,.bubble .katex{
+  display:inline-block;max-width:100%;
+  overflow-x:auto;overflow-y:hidden;
+  vertical-align:middle;
+}
+/* A faint edge hints that there is more to the right. */
+.qhead,.explain{overflow-x:auto}
+.qhead::-webkit-scrollbar,.explain::-webkit-scrollbar,
+.katex::-webkit-scrollbar{height:4px}
+.qhead::-webkit-scrollbar-thumb,.explain::-webkit-scrollbar-thumb,
+.katex::-webkit-scrollbar-thumb{background:#3a4a4c;border-radius:9px}
+
+/* Options are short, so let them wrap onto a second line instead. */
+.quiz-option{flex-wrap:wrap}
+.quiz-option>span:first-child{min-width:0;flex:1}
 /* A malformed formula shows its source instead of breaking the layout. */
 .katex-error{color:#e06a6a;font-family:inherit;font-size:.9em}
 
