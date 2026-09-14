@@ -991,6 +991,12 @@ body:has(.phone.night-bg){
   overflow-x:auto;overflow-y:hidden;
   padding-bottom:2px;
 }
+/* mhchem hides its alignment glyphs with color:transparent, but a text-shadow
+   is still painted for transparent text — that is why stray X marks appeared
+   on the gold answer line and not in the plain explanation block. Formulas
+   therefore carry no shadow of their own. */
+.katex,.katex *{text-shadow:none}
+
 /* A malformed formula shows its source instead of breaking the layout. */
 .katex-error{color:#e06a6a;font-family:inherit;font-size:.9em}
 
