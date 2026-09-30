@@ -407,6 +407,7 @@ function rich(t) {
 const validNick = s => /^[A-Za-z0-9가-힣]+$/.test(s);
 const today = () => new Date().toISOString().slice(0, 10);
 const hhmm = ts => ts ? new Date(ts).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+const mdhm = ts => { if (!ts) return ''; const d = new Date(ts); return `${d.getMonth() + 1}/${d.getDate()} ${hhmm(ts)}`; };
 
 /* ============================================================
    Avatar
@@ -1060,7 +1061,7 @@ function chat() {
       return `<div class="chat">
         <div class="chatav">${u ? sprite(u, 1) : ''}</div>
         <div class="bubble ${m.admin ? 'notice' : ''}">
-          <div class="bhead"><b>${esc(m.name)}</b>${m.admin ? '<span class="badge admin">관리자</span>' : ''}<time>${hhmm(m.ts)}</time></div>
+          <div class="bhead"><b>${esc(m.name)}</b>${m.admin ? '<span class="badge admin">관리자</span>' : ''}<time>${mdhm(m.ts)}</time></div>
           <p class="btext">${esc(m.text)}</p>
         </div>
       </div>`;
@@ -1706,7 +1707,7 @@ function admin() {
           <button class="btn inline red" onclick="clearChat()">전체 삭제</button></div>
         ${db.messages.slice(-12).reverse().map(m => `<div class="mission">
           <span class="mtask">${m.admin ? '<span class="badge admin">공지</span> ' : ''}<b>${esc(m.name)}</b> ${esc(m.text)}</span>
-          <span class="mmeta"><i class="prog">${hhmm(m.ts)}</i>
+          <span class="mmeta"><i class="prog">${mdhm(m.ts)}</i>
             <button class="btn inline red" onclick="delMessage(${m.id ?? 'null'}, ${m.ts})">삭제</button></span>
         </div>`).join('')}` : '<p class="small">아직 대화가 없습니다.</p>'}
     </div>
